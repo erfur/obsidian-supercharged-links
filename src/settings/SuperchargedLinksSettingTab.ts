@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, debounce } from "obsidian"
 import SuperchargedLinks from "main"
 import { CSSBuilderModal, updateDisplay } from "../cssBuilder/cssBuilderModal";
 import { buildCSS } from "../cssBuilder/cssBuilder";
-import {updateVisibleLinks} from "../linkAttributes/linkAttributes";
+import { updateVisibleLinks } from "../linkAttributes/linkAttributes";
 
 export default class SuperchargedLinksSettingTab extends PluginSettingTab {
 	plugin: SuperchargedLinks;

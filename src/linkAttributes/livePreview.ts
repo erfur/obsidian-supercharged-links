@@ -1,14 +1,13 @@
-import {App, debounce, Debouncer, editorViewField, MarkdownView, TFile} from "obsidian";
-import {SuperchargedLinksSettings} from "../settings/SuperchargedLinksSettings";
-import {Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
-import {RangeSet, RangeSetBuilder} from "@codemirror/state";
-import {syntaxTree} from "@codemirror/language";
-import {tokenClassNodeProp} from "@codemirror/language";
-import {fetchTargetAttributesSync} from "./linkAttributes";
-import {DefaultFunctions} from "obsidian-dataview/lib/expression/functions";
+import { App, debounce, Debouncer, editorViewField, MarkdownView, TFile } from "obsidian";
+import { SuperchargedLinksSettings } from "../settings/SuperchargedLinksSettings";
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
+import { RangeSet, RangeSetBuilder } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
+import { tokenClassNodeProp } from "@codemirror/language";
+import { fetchTargetAttributesSync } from "./linkAttributes";
+import { DefaultFunctions } from "obsidian-dataview/lib/expression/functions";
 
-export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings)
-{
+export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings) {
     // Implements the live preview supercharging
     // Code structure based on https://github.com/nothingislost/obsidian-cm6-attributes/blob/743d71b0aa616407149a0b6ea5ffea28e2154158/src/main.ts
     // Code help credits to @NothingIsLost! They have been a great help getting this to work properly.
@@ -67,11 +66,12 @@ export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings
                         const maxTo = update.view.lineBlockAt(toB).to;
                         // remove things within bounds
                         this.decorations = this.decorations.update({
-                            filter: (from, to) => to < minFrom || from > maxTo});
+                            filter: (from, to) => to < minFrom || from > maxTo
+                        });
 
                         // Update decorations within bounds
                         this.decorations = RangeSet.join([this.decorations,
-                            this.buildDecorations(update.view, minFrom, maxTo)]);
+                        this.buildDecorations(update.view, minFrom, maxTo)]);
                     });
                 }
                 else if (update.viewportChanged) {
@@ -82,7 +82,7 @@ export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings
             destroy() {
             }
 
-            buildDecorations(view: EditorView, updateFrom: number = -1, updateTo: number=-1) {
+            buildDecorations(view: EditorView, updateFrom: number = -1, updateTo: number = -1) {
                 let builder = new RangeSetBuilder<Decoration>();
                 if (!settings.enableEditor) {
                     return builder.finish();
@@ -94,7 +94,7 @@ export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings
 
                 let mdAliasFrom: number = null;
                 let mdAliasTo: number = null;
-                for (let {from, to} of view.visibleRanges) {
+                for (let { from, to } of view.visibleRanges) {
                     // When updating, only changes the range given.
                     if (updateFrom !== -1 && (to < updateFrom || from > updateTo)) continue;
                     syntaxTree(view.state).iterate({
@@ -142,7 +142,7 @@ export function buildCMViewPlugin(app: App, _settings: SuperchargedLinksSettings
                                         try {
                                             file = app.vault.getAbstractFileByPath(decodeURIComponent(linkText)) as TFile;
                                         }
-                                        catch(e) {}
+                                        catch (e) { }
                                     }
                                     if (file) {
                                         let _attributes = fetchTargetAttributesSync(app, settings, file, true);

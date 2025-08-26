@@ -6,8 +6,8 @@
     "Status"
   ],
   "targetTags": true,
-  "classFilesPath": "🗃/",
   "getFromInlineField": true,
+  "enableTabHeader": true,
   "activateSnippet": true,
   "enableEditor": true,
   "enableFileList": true,
@@ -40,6 +40,13 @@
       "selectBackground": false
     }
   ],
+  "enableDynamicViewNameFormatting": true,
+  "dynamicViewNameFormat": "{name} - {description}",
+  "dynamicViewNameFormatProperties": [
+    "name",
+    "description"
+  ],
+  "classFilesPath": "🗃/",
   "presetFields": [
     {
       "name": "category",

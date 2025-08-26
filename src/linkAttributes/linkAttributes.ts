@@ -2,7 +2,43 @@ import { App, getAllTags, getLinkpath, LinkCache, MarkdownPostProcessorContext, 
 import { SuperchargedLinksSettings } from "src/settings/SuperchargedLinksSettings"
 import SuperchargedLinks from "../../main";
 
+/**
+ * Formats a target note name using the specified format string with property expansion
+ * @param format The format string (e.g., "{name} ({status:Unknown})")
+ * @param originalName The original note name
+ * @param properties The properties/attributes of the target note
+ * @returns The formatted name string
+ */
+export function formatTargetNoteName(format: string, originalName: string, properties: Record<string, string>): string {
+    if (!format || format === "{name}") {
+        return originalName;
+    }
+
+    let result = format;
+
+    // Replace {name} with the original name
+    result = result.replace(/\{name\}/g, originalName);
+
+    // Replace {property} with property values
+    result = result.replace(/\{([^}]+)\}/g, (match, property) => {
+        const value = properties[property];
+        if (value && value.trim()) {
+            return value.trim();
+        }
+        return '';
+    });
+
+    return result;
+}
+
 export function clearExtraAttributes(link: HTMLElement) {
+    // Restore original name if it was stored
+    const originalName = link.getAttribute('data-original-name');
+    if (originalName) {
+        link.textContent = originalName;
+        link.removeAttribute('data-original-name');
+    }
+
     Object.values(link.attributes).forEach(attr => {
         if (attr.name.includes("data-link")) {
             link.removeAttribute(attr.name)
@@ -19,15 +55,17 @@ export function fetchTargetAttributesSync(app: App, settings: SuperchargedLinksS
     const frontmatter = cache.frontmatter
 
     if (frontmatter) {
-        settings.targetAttributes.forEach(attribute => {
-            if (Object.keys(frontmatter).includes(attribute)) {
-                if (attribute === 'tag' || attribute === 'tags') {
-                    new_props['tags'] += frontmatter[attribute];
-                } else {
-                    new_props[attribute] = frontmatter[attribute]
+        settings.targetAttributes
+            .concat(settings.dynamicViewNameFormatProperties)
+            .forEach(attribute => {
+                if (Object.keys(frontmatter).includes(attribute)) {
+                    if (attribute === 'tag' || attribute === 'tags') {
+                        new_props['tags'] += frontmatter[attribute];
+                    } else {
+                        new_props[attribute] = frontmatter[attribute]
+                    }
                 }
-            }
-        })
+            })
     }
 
     if (settings.targetTags) {
@@ -106,6 +144,18 @@ function updateLinkExtraAttributes(app: App, settings: SuperchargedLinksSettings
         if (dest) {
             const new_props = fetchTargetAttributesSync(app, settings, dest, false);
             setLinkNewProps(link, new_props);
+
+            // Apply dynamic view name formatting if enabled
+            if (settings.enableDynamicViewNameFormatting && settings.dynamicViewNameFormat) {
+                const originalName = link.textContent;
+                const formattedName = formatTargetNoteName(settings.dynamicViewNameFormat, originalName, new_props);
+                if (formattedName !== originalName) {
+                    // Store the original name as a data attribute for reference
+                    link.setAttribute('data-original-name', originalName);
+                    // Update the displayed text
+                    link.textContent = formattedName;
+                }
+            }
         }
     }
 }
@@ -127,6 +177,17 @@ export function updateDivExtraAttributes(app: App, settings: SuperchargedLinksSe
     if (dest) {
         const new_props = fetchTargetAttributesSync(app, settings, dest, true);
         setLinkNewProps(link, new_props);
+
+        // Apply dynamic view name formatting if enabled
+        if (settings.enableDynamicViewNameFormatting && settings.dynamicViewNameFormat) {
+            const formattedName = formatTargetNoteName(settings.dynamicViewNameFormat, linkName, new_props);
+            if (formattedName !== linkName) {
+                // Store the original name as a data attribute for reference
+                link.setAttribute('data-original-name', linkName);
+                // Update the displayed text
+                link.textContent = formattedName;
+            }
+        }
     }
 }
 
@@ -143,7 +204,7 @@ export function updateElLinks(app: App, plugin: SuperchargedLinks, el: HTMLEleme
 
 export function updatePropertiesPane(propertiesEl: HTMLElement, file: TFile, app: App, plugin: SuperchargedLinks) {
     const frontmatter = app.metadataCache.getCache(file.path)?.frontmatter;
-    if(!!frontmatter) {
+    if (!!frontmatter) {
         const nodes = propertiesEl.querySelectorAll("div.internal-link > .multi-select-pill-content");
         for (let i = 0; i < nodes.length; ++i) {
             const el = nodes[i] as HTMLElement;
